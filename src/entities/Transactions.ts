@@ -6,20 +6,21 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  IsNull,
 } from "typeorm";
 import { Accounts } from "./Accounts";
 import { User } from "./User.entity";
 import { Category } from "./Category";
 
 @Entity()
-export class Transacitons {
+export class Transactions {
   @PrimaryGeneratedColumn()
   id!: number; // Using the definite assignment assertion
 
   @Column()
   cost: number;
 
-  @Column()
+  @Column({ nullable: true })
   note: string;
 
   @Column()
@@ -28,8 +29,8 @@ export class Transacitons {
   @Column()
   monthly: string;
 
-  @Column()
-  file_path: string;
+  @Column({ nullable: true })
+  slip: string;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
@@ -68,7 +69,7 @@ export class Transacitons {
     category: Category,
     createdAt: Date,
     updatedAt: Date,
-    file_path: string
+    slip: string
   ) {
     this.cost = cost;
     this.note = note;
@@ -76,7 +77,7 @@ export class Transacitons {
     this.user = user;
     this.annual = annual;
     this.monthly = monthly;
-    this.file_path = file_path;
+    this.slip = slip;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.category = category;

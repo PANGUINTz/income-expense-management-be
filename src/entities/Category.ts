@@ -8,7 +8,7 @@ import {
 } from "typeorm";
 import { TypeCategory } from "../commons/type.enum";
 import { User } from "./User.entity";
-import { Transacitons } from "./Transactions";
+import { Transactions } from "./Transactions";
 
 @Entity()
 export class Category {
@@ -36,16 +36,16 @@ export class Category {
   @JoinColumn({ name: "user_id" })
   user: User;
 
-  @OneToMany(() => Transacitons, (transaction) => transaction.category)
+  @OneToMany(() => Transactions, (transaction) => transaction.category)
   @JoinColumn({ name: "transactions" })
-  transactions: Transacitons[];
+  transactions: Transactions[];
 
   constructor(
     name: string,
     type: TypeCategory,
     is_public: boolean,
     user: User,
-    transactions: Transacitons[]
+    transactions: Transactions[]
   ) {
     this.name = name;
     this.type = type;

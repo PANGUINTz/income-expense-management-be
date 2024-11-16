@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
-import { Transacitons } from "./Transactions";
+import { Transactions } from "./Transactions";
 import { Accounts } from "./Accounts";
 import { Category } from "./Category";
 import { RefreshToken } from "./RefreshToken";
@@ -15,8 +15,8 @@ export class User {
   @Column()
   password: string;
 
-  @OneToMany(() => Transacitons, (transaction) => transaction.user)
-  transactions: Transacitons[];
+  @OneToMany(() => Transactions, (transaction) => transaction.user)
+  transactions: Transactions[];
 
   @OneToMany(() => Accounts, (account) => account.user)
   account: Accounts[];
@@ -30,7 +30,7 @@ export class User {
   constructor(
     username: string,
     password: string,
-    transactions: Transacitons[],
+    transactions: Transactions[],
     account: Accounts[],
     category: Category[],
     refresh_token: RefreshToken[]

@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 
 import { User } from "../entities/User.entity";
-import { Transacitons } from "../entities/Transactions";
+import { Transactions } from "../entities/Transactions";
 import { Category } from "../entities/Category";
 import { Accounts } from "../entities/Accounts";
 import { RefreshToken } from "../entities/RefreshToken";
@@ -16,7 +16,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME ?? "test",
   synchronize: process.env.NODE_ENV == "development",
   logging: true,
-  entities: [User, Transacitons, Category, Accounts, RefreshToken],
+  entities: [User, Transactions, Category, Accounts, RefreshToken],
   subscribers: [],
   migrations: [],
 });

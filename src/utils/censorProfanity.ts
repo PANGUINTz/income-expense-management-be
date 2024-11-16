@@ -13,7 +13,10 @@ export function censorProfanity(note: string): string {
     "bitch",
     "กระหรี่",
     "กระโปก",
-  ]; // Extend this list
-  const regex = new RegExp(`\\b(${badWords.join("|")})\\b`, "gi");
-  return note.replace(regex, "***");
+    "hee",
+    "kuay",
+  ];
+  const regex = new RegExp(badWords.join("|"), "gi");
+
+  return note.replace(regex, () => "*".repeat(3));
 }

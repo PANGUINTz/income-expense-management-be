@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { Transacitons } from "./Transactions";
+import { Transactions } from "./Transactions";
 import { User } from "./User.entity";
 
 @Entity()
@@ -24,10 +24,10 @@ export class Accounts {
   @JoinColumn({ name: "user_id" })
   user: User;
 
-  @OneToMany(() => Transacitons, (transaction) => transaction.account)
-  transactions: Transacitons[];
+  @OneToMany(() => Transactions, (transaction) => transaction.account)
+  transactions: Transactions[];
 
-  constructor(name: string, user: User, transactions: Transacitons[]) {
+  constructor(name: string, user: User, transactions: Transactions[]) {
     this.name = name;
     this.transactions = transactions;
     this.user = user;
