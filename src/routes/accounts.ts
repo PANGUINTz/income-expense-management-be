@@ -22,7 +22,7 @@ export default (router: Router) => {
     AccountController.getAccountById
   );
 
-  router.patch(
+  router.put(
     "/account/:accountId",
     authenticateToken,
     isOwner,

@@ -44,12 +44,14 @@ export const CategoryController = {
     }
   },
 
-  deleteCategory: async (req: Request, res: Response) => {
+  deleteCategory: async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const userId = req["userId"];
       const categoryId: number = +req.params.categoryId;
 
       const findCategory = await categoryRepository.findOne({
-        where: { id: categoryId },
+        where: { id: categoryId, user: { id: +userId! } },
+        relations: ["user"],
       });
       if (!findCategory) {
         res.status(400).json({

@@ -13,7 +13,7 @@ interface DecodedToken {
 export function generateToken(userId: number): string {
   const payload = {
     userId,
-    // exp: Math.floor(Date.now() / 1000) + TOKEN_EXPIRATION,
+    exp: Math.floor(Date.now() / 1000) + TOKEN_EXPIRATION,
   };
   const payloadString = JSON.stringify(payload);
   const hash = crypto

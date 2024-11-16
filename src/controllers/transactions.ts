@@ -11,7 +11,7 @@ import { censorProfanity } from "../utils/censorProfanity";
 const transactionRepository = AppDataSource.getRepository(Transactions);
 const accountRepository = AppDataSource.getRepository(Accounts);
 const userRepository = AppDataSource.getRepository(User);
-const categoryRepository = AppDataSource.getRepository(Category);
+
 export const TransactionsController = {
   getTransaction: async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -62,8 +62,8 @@ export const TransactionsController = {
               });
 
             if (category) {
-              queryBuilder.andWhere("category.type = :type", {
-                type: category,
+              queryBuilder.andWhere("transactions.category_id = :category_id", {
+                category_id: category,
               });
             }
 
@@ -113,8 +113,8 @@ export const TransactionsController = {
               });
 
             if (category) {
-              queryBuilder.andWhere("category.type = :type", {
-                type: category,
+              queryBuilder.andWhere("transactions.category_id = :category_id", {
+                category_id: category,
               });
             }
             if (account) {
@@ -158,11 +158,10 @@ export const TransactionsController = {
               });
 
             if (category) {
-              queryBuilder.andWhere("category.type = :type", {
-                type: category,
+              queryBuilder.andWhere("transactions.category_id = :category_id", {
+                category_id: category,
               });
             }
-
             if (account) {
               queryBuilder.andWhere("transactions.account_id = :account", {
                 account,
@@ -372,6 +371,13 @@ export const TransactionsController = {
 
       const slip = req.file;
 
+      if (slip && slip.size > 1000000) {
+        res
+          .status(405)
+          .send({ status: false, message: "File too large limit 1MB." });
+        return;
+      }
+
       const userData = await userRepository.findOne({
         where: { id: +userId! },
       });
@@ -407,7 +413,96 @@ export const TransactionsController = {
       const result = transactionRepository.create(combinedData);
       await transactionRepository.save(result);
 
-      res.json({ status: true, message: "created success" });
+      res.status(201).json({ status: true, message: "created success" });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ status: false, message: "Error fetching transaction", error });
+    }
+  },
+
+  averageMonth: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { accountId } = req.params;
+      const userId = req["userId"];
+
+      const accountExists = await accountRepository.findOne({
+        where: { id: +accountId, user: { id: +userId! } },
+        relations: ["user"],
+      });
+
+      if (!accountExists) {
+        res
+          .status(404)
+          .send({ status: false, message: "account is not exists" });
+        return;
+      }
+
+      const date = new Date();
+      const lastDay = new Date(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        0
+      ).getDate();
+
+      const currentDay = new Date();
+      const remainDate = lastDay - currentDay.getDate();
+
+      const income = await transactionRepository
+        .createQueryBuilder("transactions")
+        .select("SUM(transactions.cost) as totalIncome")
+        .leftJoin("transactions.category", "category")
+        .leftJoin("transactions.account", "account")
+        .leftJoin("transactions.user", "user")
+        .where("user.id = :id", { id: userId })
+        .andWhere("transactions.account_id = :account_id", {
+          account_id: accountId,
+        })
+        .andWhere("category.type = :type", {
+          type: "income",
+        })
+        .andWhere("transactions.monthly = :monthly", {
+          monthly: currentDay.getMonth() + 1,
+        })
+        .andWhere("transactions.annual = :annual", {
+          annual: currentDay.getFullYear(),
+        })
+        .getRawOne();
+
+      const expense = await transactionRepository
+        .createQueryBuilder("transactions")
+        .select("SUM(transactions.cost) as totalExpense")
+        .leftJoin("transactions.category", "category")
+        .leftJoin("transactions.account", "account")
+        .leftJoin("transactions.user", "user")
+        .where("user.id = :id", { id: userId })
+        .andWhere("transactions.account_id = :account_id", {
+          account_id: accountId,
+        })
+        .andWhere("category.type = :type", {
+          type: "expense",
+        })
+        .andWhere("transactions.monthly = :monthly", {
+          monthly: currentDay.getMonth() + 1,
+        })
+        .andWhere("transactions.annual = :annual", {
+          annual: currentDay.getFullYear(),
+        })
+        .getRawOne();
+
+      const income_cost = income.totalIncome ?? 0;
+      const expense_cost = expense.totalExpense ?? 0;
+
+      res.status(200).send({
+        income: income_cost,
+        expense: expense_cost,
+        remain_cost: income_cost - expense_cost,
+        remain_date: remainDate,
+        cost_per_date: Math.max(
+          0,
+          Math.floor((income.totalIncome - expense.totalExpense) / remainDate)
+        ),
+      });
     } catch (error) {
       res
         .status(500)

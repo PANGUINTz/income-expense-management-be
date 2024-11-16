@@ -1,11 +1,16 @@
 import { Request, Response } from "express";
-import { User } from "../entities/User.entity";
-import { AppDataSource } from "../config/database";
 import { hash, verify } from "argon2";
-import { generateToken, validateToken } from "../utils/token";
-import { AuthenticatedRequest } from "../commons/type";
+import uap from "ua-parser-js";
 
-export const authRepository = AppDataSource.getRepository(User);
+import { generateToken } from "../utils/token";
+import { AuthenticatedRequest } from "../commons/type";
+import { AppDataSource } from "../config/database";
+import { User } from "../entities/User.entity";
+import { RefreshToken } from "../entities/RefreshToken";
+
+const authRepository = AppDataSource.getRepository(User);
+const refreshToken = AppDataSource.getRepository(RefreshToken);
+
 export const AuthController = {
   signUp: async (req: Request, res: Response) => {
     try {
@@ -36,17 +41,11 @@ export const AuthController = {
 
   signIn: async (req: Request, res: Response) => {
     try {
-      const ip =
-        req.headers["cf-connecting-ip"] ||
-        req.headers["x-real-ip"] ||
-        req.headers["x-forwarded-for"] ||
-        req.socket.remoteAddress ||
-        "";
-
       const data: Partial<User> = req.body;
       const userExists = await authRepository.findOne({
         where: { username: data.username },
       });
+      let ua = uap(req.headers["user-agent"]);
 
       if (!userExists) {
         res
@@ -68,6 +67,18 @@ export const AuthController = {
       }
 
       const token = generateToken(userExists?.id!);
+
+      const refresh_token = {
+        token,
+        status: true,
+        user: userExists,
+        os: ua.os.name ?? "postman",
+        browser: ua.browser.name ?? "postman",
+      };
+
+      const newRefreshToken = refreshToken.create(refresh_token);
+      await refreshToken.save(newRefreshToken);
+
       res.status(200).json({
         status: true,
         message: "success",
@@ -93,6 +104,43 @@ export const AuthController = {
         message: "success",
         data: data,
       });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ status: false, message: "Error fetching auth", error });
+    }
+  },
+
+  signOut: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req["userId"];
+      const token = req.headers.authorization?.split("Bearer ")[1];
+
+      const signout = await refreshToken.update(
+        { token: token, user: { id: +userId! } },
+        { status: false }
+      );
+
+      if (signout.affected == 0) {
+        res.status(404).send({ status: true, message: "logout failed" });
+        return;
+      }
+
+      res.status(200).send({ status: true, message: "logout success" });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ status: false, message: "Error fetching auth", error });
+    }
+  },
+
+  signOutAllDevice: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req["userId"];
+
+      await refreshToken.update({ user: { id: +userId! } }, { status: false });
+
+      res.status(200).send({ status: true, message: "logout success" });
     } catch (error) {
       res
         .status(500)

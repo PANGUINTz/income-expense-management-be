@@ -18,6 +18,12 @@ export class RefreshToken {
   @Column()
   status: boolean;
 
+  @Column()
+  os: string;
+
+  @Column()
+  browser: string;
+
   @ManyToOne(() => User, (user) => user.account, {
     cascade: true,
     onDelete: "CASCADE",
@@ -25,9 +31,17 @@ export class RefreshToken {
   @JoinColumn({ name: "user_id" })
   user: User;
 
-  constructor(token: string, status: boolean, user: User) {
+  constructor(
+    token: string,
+    status: boolean,
+    os: string,
+    browser: string,
+    user: User
+  ) {
     this.token = token;
     this.user = user;
     this.status = status;
+    this.os = os;
+    this.browser = browser;
   }
 }
